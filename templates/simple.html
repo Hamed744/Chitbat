@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT Test</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #f7f7f8;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        .header {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e5e5;
+            text-align: center;
+            font-weight: 600;
+        }
+        .chat-area {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .input-area {
+            padding: 1rem;
+            border-top: 1px solid #e5e5e5;
+        }
+        .input-form {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .message-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            outline: none;
+        }
+        .message-input:focus {
+            border-color: #10a37f;
+        }
+        .submit-btn {
+            padding: 0.75rem 1.5rem;
+            background: #10a37f;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .submit-btn:hover {
+            background: #0d8f6b;
+        }
+        .message {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .user-message {
+            background: #f7f7f8;
+            margin-left: 2rem;
+        }
+        .bot-message {
+            background: #ffffff;
+            border: 1px solid #e5e5e5;
+            margin-right: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ChatGPT</h1>
+        </div>
+        
+        <div class="chat-area" id="chat-area">
+            <div class="message bot-message">
+                سلام! من ChatGPT هستم. چطور می‌توانم کمکتان کنم؟
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <form class="input-form" id="message-form">
+                <input 
+                    type="text" 
+                    class="message-input" 
+                    id="message-input" 
+                    placeholder="پیام خود را بنویسید..."
+                    required
+                >
+                <button type="submit" class="submit-btn">ارسال</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Simple page loaded');
+            
+            const form = document.getElementById('message-form');
+            const input = document.getElementById('message-input');
+            const chatArea = document.getElementById('chat-area');
+            
+            console.log('Form:', form);
+            console.log('Input:', input);
+            console.log('Chat area:', chatArea);
+            
+            if (form && input && chatArea) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    console.log('Form submitted with:', input.value);
+                    
+                    const userMessage = input.value.trim();
+                    if (userMessage) {
+                        // Add user message
+                        const userDiv = document.createElement('div');
+                        userDiv.className = 'message user-message';
+                        userDiv.textContent = userMessage;
+                        chatArea.appendChild(userDiv);
+                        
+                        // Add bot response
+                        const botDiv = document.createElement('div');
+                        botDiv.className = 'message bot-message';
+                        botDiv.textContent = 'پیام شما دریافت شد: ' + userMessage;
+                        chatArea.appendChild(botDiv);
+                        
+                        // Clear input
+                        input.value = '';
+                        
+                        // Scroll to bottom
+                        chatArea.scrollTop = chatArea.scrollHeight;
+                    }
+                });
+                
+                console.log('Event listener added successfully');
+            } else {
+                console.error('Required elements not found!');
+            }
+        });
+    </script>
+</body>
+</html>
