@@ -12,5 +12,5 @@ EXPOSE 7860
 # START: OPTIMIZED GUNICORN COMMAND
 # This command uses 5 asynchronous 'gevent' workers to handle many concurrent users
 # without blocking, and sets a 12-minute timeout for long-running API calls.
-CMD ["gunicorn", "--workers", "5", "--worker-class", "gevent", "--bind", "0.0.0.0:7860", "--timeout", "720", "app:app"]
+CMD ["sh", "-c", "gunicorn --workers ${GUNICORN_WORKERS:-5} --worker-class gevent --bind 0.0.0.0:${PORT:-7860} --timeout ${GUNICORN_TIMEOUT:-720} app:app"]
 # END: OPTIMIZED GUNICORN COMMAND

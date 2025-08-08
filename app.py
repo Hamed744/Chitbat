@@ -475,6 +475,10 @@ def stream_file_analysis(history_for_gemini, model_name: str):
 def index():
     return render_template('index.html')
 
+@app.route('/healthz')
+def healthz():
+    return Response(json.dumps({"status": "ok"}), status=200, mimetype='application/json')
+
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.json
