@@ -3,308 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>چت بات آلفا</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class', 
-        theme: {
-          extend: {}
-        }
-      }
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <title>ChatGPT</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
 </head>
-<body class="bg-slate-100 dark:bg-slate-900">
-    <svg width="0" height="0" style="position: absolute; overflow: hidden;">
-        <defs>
-            <filter id="shadowAndHighlight">
-                <feDropShadow dx="-0.5" dy="-0.5" stdDeviation="0" flood-color="#FFFFFF" flood-opacity="0.8"/>
-                <feDropShadow dx="1" dy="1" stdDeviation="0" flood-color="#888888" flood-opacity="0.8"/>
-            </filter>
-        </defs>
-    </svg>
-    
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-40 dark:bg-opacity-60 z-40 hidden opacity-0"></div>
-    <aside id="history-sidebar" class="fixed top-0 right-0 h-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-l border-slate-200/50 dark:border-slate-700/50 w-72 p-4 flex flex-col z-50 transform translate-x-full">
-        <div class="flex items-center justify-between mb-4 px-2">
-            <h2 class="text-lg font-bold text-slate-800 dark:text-slate-200">تاریخچه چت‌ها</h2>
-            <button id="delete-all-chats" title="حذف تمام چت‌ها" class="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-full transition-colors">
-                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-            </button>
+<body>
+    <div id="app">
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <button id="new-chat-btn" class="new-chat-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                    گفتگوی جدید
+                </button>
+            </div>
+            
+            <div class="conversations-list" id="conversations-list">
+                <!-- لیست مکالمات اینجا قرار می‌گیرد -->
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <span>کاربر</span>
+                </div>
+            </div>
         </div>
-        <nav id="history-list" class="flex-grow overflow-y-auto custom-scrollbar -mr-2 pr-2"></nav>
-        <div id="sidebar-footer" class="flex-shrink-0 pt-4 border-t border-slate-200/60 dark:border-slate-700/60">
-            <button id="settings-button" class="sidebar-button">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.438.995s.145.755.438.995l1.003.827c.48.398.668 1.03.26 1.431l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.437-.995s-.145-.755-.437-.995l-1.004-.827a1.125 1.125 0 01-.26-1.431l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.645-.869l.213-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                <span>تنظیمات</span>
-            </button>
-        </div>
-    </aside>
-
-    <div id="app-container" class="h-full w-full max-w-3xl mx-auto shadow-2xl bg-slate-100 dark:bg-slate-900">
-        <header id="main-header" class="flex items-center justify-between p-4 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 z-20">
-            <button id="menu-button" class="p-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-4.125 6h-8.25" /></svg>
-            </button>
-            <button id="model-select-button" class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2">
-                <span id="current-model-name"></span>
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
-            </button>
-            <button id="new-chat-button" class="p-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
-            </button>
-        </header>
         
-        <main id="chat-window" class="flex-grow w-full p-4 sm:p-6 overflow-y-auto custom-scrollbar"></main>
-
-        <footer id="main-footer" class="flex-shrink-0 px-4 sm:px-6 pb-4 sm:pb-6 z-10 pt-4 bg-gradient-to-t from-slate-100 via-slate-100 to-transparent dark:from-slate-900 dark:via-slate-900">
-            <div id="image-preview-container" class="mb-3 relative p-1.5 bg-white/50 dark:bg-slate-700/50 backdrop-blur-md rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm hidden">
-                <img id="image-preview" src="" alt="Preview" class="h-20 w-20 object-cover rounded-md flex-shrink-0" />
-                <span id="file-info-text" class="mr-2 text-slate-800 dark:text-slate-200"></span> 
-                <button id="remove-image-button" class="absolute -top-2 -left-2 bg-slate-700 text-white rounded-full p-0.5 leading-none shadow-md hover:bg-red-600 transition-colors">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="chat-header">
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12h18M3 6h18M3 18h18"/>
+                    </svg>
                 </button>
+                <h1 class="chat-title">ChatGPT</h1>
+                <div class="header-actions">
+                    <button id="theme-toggle" class="theme-toggle" title="تغییر تم">
+                        <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"/>
+                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                        </svg>
+                        <svg class="moon-icon hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Chat Messages -->
+            <div class="chat-container">
+                <div id="messages-container" class="messages-container">
+                    <!-- صفحه خوش‌آمدگویی -->
+                    <div id="welcome-screen" class="welcome-screen">
+                        <div class="welcome-content">
+                            <div class="chatgpt-logo">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
+                                </svg>
+                            </div>
+                            <h2 class="welcome-title">چطور می‌توانم به شما کمک کنم؟</h2>
+                            
+                            <div class="example-prompts">
+                                <div class="example-prompt" onclick="sendMessage('یک برنامه ورزشی هفتگی برای مبتدیان طراحی کن')">
+                                    <div class="prompt-icon">💪</div>
+                                    <div class="prompt-text">برنامه ورزشی هفتگی برای مبتدیان</div>
+                                </div>
+                                <div class="example-prompt" onclick="sendMessage('روش‌های مؤثر یادگیری زبان انگلیسی را توضیح بده')">
+                                    <div class="prompt-icon">📚</div>
+                                    <div class="prompt-text">روش‌های یادگیری زبان انگلیسی</div>
+                                </div>
+                                <div class="example-prompt" onclick="sendMessage('یک دستور پخت غذای سالم و خوشمزه بده')">
+                                    <div class="prompt-icon">🍳</div>
+                                    <div class="prompt-text">دستور پخت غذای سالم</div>
+                                </div>
+                                <div class="example-prompt" onclick="sendMessage('نکات مدیریت زمان برای افزایش بهره‌وری')">
+                                    <div class="prompt-icon">⏰</div>
+                                    <div class="prompt-text">نکات مدیریت زمان</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
-            <form id="message-form" class="flex items-center bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg p-2 border border-slate-200/80 dark:border-slate-700/80 shadow-md focus-within:ring-2 focus-within:ring-blue-500 rounded-full">
-                <textarea id="message-input" rows="1" placeholder="از من هرچه می‌خواهی بپرس..." class="flex-grow bg-transparent text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none px-4 text-right" autocomplete="off"></textarea>
-                
-                <input type="file" id="image-file-input" class="hidden" accept="image/*">
-                <!-- ##################################################################### -->
-                <!-- START: کد اصلاح شده -->
-                <!-- ویژگی accept حذف شد تا همه نوع فایلی قابل انتخاب باشد -->
-                <input type="file" id="general-file-input" class="hidden"> 
-                <!-- ##################################################################### -->
-                <!-- END: کد اصلاح شده -->
-                <!-- ##################################################################### -->
-                
-                <button type="button" id="attach-file-button" class="p-2 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-500 transition-colors">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.122 2.122l7.81-7.81" /></svg>
-                </button>
-                <button id="submit-button" type="submit" class="p-2 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white disabled:from-slate-300 disabled:to-slate-400 dark:disabled:from-slate-500 dark:disabled:to-slate-600 transition-all flex items-center justify-center w-10 h-10 flex-shrink-0">
-                    <svg id="send-icon" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                    <svg id="stop-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 5a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V6a1 1 0 00-1-1H5z" clip-rule="evenodd"></path></svg>
-                </button>
-            </form>
-        </footer>
-    </div>
-    
-    <div id="model-select-modal" class="fixed inset-0 bg-black bg-opacity-40 dark:bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-       <div id="modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w_sm p-6 transform">
-            <h2 class="text-xl font-bold text-center mb-6 text-slate-800 dark:text-white">یک مدل را انتخاب کنید</h2>
-            <div class="space-y-4">
-                <button data-model="gemini-2.5-flash" data-name="چت بات سریع آلفا" class="model-option-card w-full text-right p-4 border dark:border-slate-700 rounded-xl hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-slate-700/50 transition-all flex items-center gap-4">
-                    <div class="w-5 h-5 border-2 border-slate-400 dark:border-slate-500 rounded-full flex items-center justify-center flex-shrink-0 radio-icon"><div class="w-2.5 h-2.5 bg-blue-500 rounded-full inner-dot hidden"></div></div>
-                    <div>
-                        <p class="font-semibold text-slate-800 dark:text-slate-200">چت بات سریع آلفا</p><p class="text-sm text-slate-500 dark:text-slate-400">مناسب برای سرعت و کارهای روزمره</p>
+            <!-- Input Area -->
+            <div class="input-container">
+                <form id="message-form" class="message-form">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="message-input" 
+                            class="message-input" 
+                            placeholder="پیام خود را اینجا بنویسید..."
+                            rows="1"
+                            maxlength="4000"
+                        ></textarea>
+                        <button type="submit" id="send-button" class="send-button" disabled>
+                            <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"/>
+                            </svg>
+                        </button>
                     </div>
-                </button>
-                <button data-model="gemini-2.5-pro" data-name="چت بات پیشرفته آلفا" class="model-option-card w-full text-right p-4 border dark:border-slate-700 rounded-xl hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-slate-700/50 transition-all flex items-center gap-4">
-                    <div class="w-5 h-5 border-2 border-slate-400 dark:border-slate-500 rounded-full flex items-center justify-center flex-shrink-0 radio-icon"><div class="w-2.5 h-2.5 bg-blue-500 rounded-full inner-dot hidden"></div></div>
-                    <div>
-                        <p class="font-semibold text-slate-800 dark:text-slate-200">چت بات پیشرفته آلفا</p><p class="text-sm text-slate-500 dark:text-slate-400">برای پاسخ‌های دقیق‌تر و تحلیل فایل‌ها</p>
-                    </div>
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-40 dark:bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-        <div id="settings-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w_sm p-6 transform">
-            <h2 class="text-xl font-bold text-center mb-6 text-slate-800 dark:text-white">تنظیمات</h2>
-            <div class="flex items-center justify-between p-4 rounded-lg bg-slate-100 dark:bg-slate-700/50">
-                <label for="theme-toggle" class="text-slate-700 dark:text-slate-300 font-medium">حالت تیره</label>
-                <label class="theme-switch">
-                    <input type="checkbox" id="theme-toggle">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-        </div>
-    </div>
-    
-    <div id="history-item-menu" class="fixed bg-white dark:bg-slate-800 rounded-xl shadow-lg p-2 z-50 w-56 border border-slate-200 dark:border-slate-700">
-    </div>
-    
-    <div id="message-item-menu" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-        <div id="message-item-menu-overlay" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div id="message-item-menu-content" class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-sm p-2 border border-slate-200 dark:border-slate-700">
-        </div>
-    </div>
-
-    <div id="confirm-modal" class="fixed inset-0 z-50 hidden">
-        <div id="confirm-modal-overlay" class="absolute inset-0 bg-black/40"></div>
-        <div class="relative w-full h-full flex items-center justify-center p-4">
-            <div id="confirm-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w_sm p-6 text-center">
-                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">تایید عملیات</h3>
-                <p id="confirm-modal-message" class="text-slate-600 dark:text-slate-300 mb-6"></p>
-                <div class="flex justify-center gap-4">
-                    <button id="confirm-modal-cancel-btn" class="px-6 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">انصراف</button>
-                    <button id="confirm-modal-confirm-btn" class="px-6 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors">تایید</button>
+                </form>
+                <div class="input-footer">
+                    ChatGPT می‌تواند اشتباه کند. اطلاعات مهم را بررسی کنید.
                 </div>
             </div>
         </div>
     </div>
     
-    <div id="rename-modal" class="fixed inset-0 z-50 hidden">
-        <div id="rename-modal-overlay" class="absolute inset-0 bg-black/40"></div>
-        <div class="relative w-full h-full flex items-center justify-center p-4">
-            <form id="rename-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w_sm p-6">
-                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 text-center">تغییر نام گفتگو</h3>
-                <input id="rename-input" type="text" class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none mb-6">
-                <div class="flex justify-center gap-4">
-                    <button id="rename-modal-cancel-btn" type="button" class="px-6 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">انصراف</button>
-                    <button id="rename-modal-confirm-btn" type="submit" class="px-6 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors">تایید</button>
-                </div>
-            </form>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <div class="loading-text">در حال تولید پاسخ...</div>
         </div>
     </div>
-
-    <div id="edit-modal" class="fixed inset-0 z-50 hidden">
-        <div id="edit-modal-overlay" class="absolute inset-0 bg-black/40"></div>
-        <div class="relative w-full h-full flex items-center justify-center p-4">
-            <form id="edit-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w_lg p-6">
-                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 text-center">ویرایش پیام</h3>
-                <textarea id="edit-input" rows="5" class="w-full p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none mb-6"></textarea>
-                <div class="flex justify-center gap-4">
-                    <button id="edit-modal-cancel-btn" type="button" class="px-6 py-2 rounded-lg bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">انصراف</button>
-                    <button id="edit-modal-confirm-btn" type="submit" class="px-6 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors">تایید و ارسال مجدد</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="html-preview-modal" class="hidden">
-        <div id="html-preview-overlay" class="absolute inset-0 bg-black/40"></div>
-        <div id="html-preview-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl transform">
-            <div id="html-preview-header" class="bg-slate-50 dark:bg-slate-700">
-                <h3 class="text-lg font-bold text-slate-800 dark:text-white">پیش‌نمایش HTML</h3>
-                <button id="html-preview-close-btn" class="p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <div id="html-preview-iframe-container">
-                <iframe id="html-preview-iframe" srcdoc="" allowfullscreen></iframe>
-            </div>
-        </div>
-    </div>
-
-    <div id="file-popup-menu" class="hidden bg-white border border-slate-200 dark:border-slate-700">
-        <button id="select-image-option" class="popup-option">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="svg-3d-effect" style="margin-left: 15px;">
-                <rect x="3" y="5" width="18" height="14" rx="2" ry="2" fill="#E0E0E0" stroke="#BBB" stroke-width="1"/>
-                <path d="M3 15 L8 10 L13 15 L18 10 L21 15 V19 H3 Z" fill="#999999" stroke="#777" stroke-width="0.5"/>
-                <circle cx="7" cy="8" r="2" fill="#FFD700" stroke="#DAA520" stroke-width="0.5"/>
-                <path class="upload-arrow" d="M12 4 L12 11 M9 8 L12 11 L15 8" stroke="#4CAF50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            </svg>
-            <span class="text-slate-800">آپلود تصویر</span>
-        </button>
-        <button id="select-file-option" class="popup-option">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="svg-3d-effect" style="margin-left: 15px;">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#E0E0E0" stroke="#BBB" stroke-width="1"/>
-                <polyline points="14 2 14 8 20 8" fill="#CCCCCC" stroke="#AAA" stroke-width="0.5"/>
-                <g class="magnifier-group">
-                    <circle cx="11.5" cy="14.5" r="3" fill="#F0F0F0" stroke="#777" stroke-width="1"/>
-                    <circle class="magnifying-lens" cx="11.5" cy="14.5" r="2.5" fill="rgba(180, 220, 255, 0.7)" stroke="rgba(100, 150, 200, 0.8)" stroke-width="0.5"/>
-                    <path class="magnifying-handle"
-                          d="M13.5 16.5
-                             C15 17.5 17 19.5 19 20.5
-                             Q19.5 21 19 21.5
-                             C17 20.5 15 18.5 13.5 17.5
-                             Z"
-                          fill="#999999" stroke="#777" stroke-width="0.5"/>
-                </g>
-            </svg>
-            <span class="text-slate-800">آپلود فایل</span>
-        </button>
-    </div>
-
-    <div id="image-gallery-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-        <div id="image-gallery-content" class="relative flex flex-col w-full h-full max-w-5xl max-h-[90vh] transition-all duration-300 scale-95 opacity-0">
-            <button id="gallery-close-btn" class="absolute top-2 left-2 z-10 p-2 text-white bg-black/30 rounded-full hover:bg-black/60 transition-colors">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-
-            <div class="relative flex-grow flex items-center justify-center overflow-hidden rounded-lg">
-                <img id="gallery-main-image" src="" alt="تمام صفحه" class="object-contain max-w-full max-h-full transition-opacity duration-300">
-                <button id="gallery-prev-btn" class="absolute left-4 p-3 text-white bg-black/30 rounded-full hover:bg-black/60 transition-colors">
-                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 6L9 12L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </button>
-                <button id="gallery-next-btn" class="absolute right-4 p-3 text-white bg-black/30 rounded-full hover:bg-black/60 transition-colors">
-                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </button>
-            </div>
-
-            <div class="flex-shrink-0 pt-4 flex flex-col items-center justify-center gap-4">
-                <button id="gallery-download-btn" class="flex-shrink-0 flex items-center justify-center gap-2 text-white font-semibold">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                    <span>دانلود</span>
-                </button>
-                <div id="gallery-thumbnails" class="w-full flex items-center justify-center gap-2 overflow-x-auto custom-scrollbar p-2">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Critical fix for form submission
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('=== CHATBOT INITIALIZATION ===');
-            
-            // Wait a bit for all elements to be ready
-            setTimeout(() => {
-                const form = document.getElementById('message-form');
-                const input = document.getElementById('message-input');
-                const submitBtn = document.getElementById('submit-button');
-                
-                console.log('Form elements check:');
-                console.log('- message-form:', form ? 'FOUND' : 'NOT FOUND');
-                console.log('- message-input:', input ? 'FOUND' : 'NOT FOUND');
-                console.log('- submit-button:', submitBtn ? 'FOUND' : 'NOT FOUND');
-                
-                if (form && input) {
-                    // Remove any existing listeners
-                    const newForm = form.cloneNode(true);
-                    form.parentNode.replaceChild(newForm, form);
-                    
-                    // Add clean event listener
-                    newForm.addEventListener('submit', (e) => {
-                        console.log('✅ Form submission intercepted!');
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        const message = newForm.querySelector('#message-input').value.trim();
-                        if (message) {
-                            console.log('📤 Sending message:', message);
-                            
-                            // Clear input
-                            newForm.querySelector('#message-input').value = '';
-                            
-                            // For now, just show an alert - replace with actual API call
-                            alert('پیام ارسال شد: ' + message);
-                            
-                            // TODO: Replace this with actual API call to /chat
-                        }
-                    });
-                    
-                    console.log('✅ Form handler attached successfully');
-                } else {
-                    console.error('❌ Required form elements not found');
-                }
-            }, 100);
-        });
-    </script>
-    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
     
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
