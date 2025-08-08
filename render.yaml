@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: chatlala
+    env: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /healthz
+    envVars:
+      - key: ALL_GEMINI_API_KEYS
+        sync: false
+      - key: GUNICORN_WORKERS
+        value: "3"
+      - key: GUNICORN_TIMEOUT
+        value: "720"
