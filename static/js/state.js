@@ -29,6 +29,10 @@ export function setGenerating(status) {
     isGenerating = status;
 }
 
+export function setGeneratingState(status) {
+    isGenerating = status;
+}
+
 export function setGlobalAbortController(controller) {
     globalAbortController = controller;
 }

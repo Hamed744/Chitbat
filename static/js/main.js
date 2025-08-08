@@ -2,12 +2,33 @@ import * as state from './state.js';
 import * as ui from './ui.js';
 import * as api from './api.js';
 
+function sendExamplePrompt(prompt) {
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        messageInput.value = prompt;
+        // Trigger form submission properly
+        const event = new Event('submit', {
+            bubbles: true,
+            cancelable: true
+        });
+        const form = document.getElementById('message-form');
+        if (form) {
+            form.dispatchEvent(event);
+        }
+    }
+}
+
+// Make it globally available for HTML onclick handlers
+window.sendExamplePrompt = sendExamplePrompt;
+
 async function handleFileSelection(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     ui.showFileUploading(file.name);
-    ui.dom.submitButton.disabled = true;
+    
+    const submitButton = document.getElementById('submit-button');
+    if (submitButton) submitButton.disabled = true;
 
     try {
         const onProgress = (percent) => {
@@ -29,476 +50,374 @@ async function handleFileSelection(event) {
     } finally {
         event.target.value = '';
         ui.toggleFilePopupMenu(false);
-        ui.dom.submitButton.disabled = false;
+        if (submitButton) submitButton.disabled = false;
     }
 }
 
 function handleNewChat() {
-    // #####################################################################
-    // START: کد اصلاح شده
-    // مدل پیش‌فرض به نسخه قدرتمندتر پرو تغییر کرد
-    // #####################################################################
-    const newSession = { id: Date.now().toString(), title: 'چت جدید', model: 'gemini-1.5-pro-latest', messages: [] };
-    // #####################################################################
-    // END: کد اصلاح شده
-    // #####################################################################
+    const newSession = { id: Date.now().toString(), title: 'گفتگوی جدید', model: 'gemini-2.5-flash', messages: [] };
     state.chatSessions.unshift(newSession);
     state.setActiveChatId(newSession.id);
     ui.renderActiveChat();
     ui.renderHistoryList();
+    ui.showWelcomeScreen();
 }
 
 function getFullChatText(session) {
     if (!session || !session.messages) return "";
     return session.messages
         .map(msg => {
-            const prefix = msg.role === 'user' ? 'کاربر' : 'مدل';
+            const prefix = msg.role === 'user' ? 'کاربر' : 'دستیار';
             const textContent = msg.parts?.find(p => p.text)?.text || '[محتوای غیر متنی]';
             return `${prefix}:\n${textContent}`;
         })
         .join('\n\n---\n\n');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    ui.initTheme();
-    state.loadSessions();
+// Theme Toggle Function
+function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.classList.contains('dark');
     
-    if (state.chatSessions.length === 0 || !state.getActiveChat()) {
-        handleNewChat();
+    if (isDark) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
     } else {
-        state.setActiveChatId(state.activeChatId || state.chatSessions[0].id);
-        ui.renderActiveChat();
-        ui.renderHistoryList();
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+    }
+    
+    // Update theme toggle button
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.checked = !isDark;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Content Loaded - Starting initialization');
+
+    // Initialize theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+    }
+    
+    // Update theme toggle state
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.checked = savedTheme === 'dark';
+    }
+    
+    // Initialize UI and State
+    try {
+        ui.initTheme();
+        state.loadSessions();
+        
+        if (state.chatSessions.length === 0 || !state.getActiveChat()) {
+            handleNewChat();
+        } else {
+            state.setActiveChatId(state.activeChatId || state.chatSessions[0].id);
+            ui.renderActiveChat();
+            ui.renderHistoryList();
+        }
+
+        ui.setupMobileKeyboardFix();
+        
+        const messageInput = document.getElementById('message-input');
+        if (messageInput) {
+            ui.setMinTextareaHeight(messageInput.scrollHeight);
+        }
+    } catch (error) {
+        console.error('Error during initialization:', error);
     }
 
-    ui.setupMobileKeyboardFix();
-    ui.setMinTextareaHeight(ui.dom.messageInput.scrollHeight);
-    ui.dom.messageForm.style.borderRadius = '28px';
-
-    ui.dom.newChatButton.addEventListener('click', handleNewChat);
-    ui.dom.menuButton.addEventListener('click', () => ui.toggleSidebar(true));
-    ui.dom.sidebarOverlay.addEventListener('click', () => ui.toggleSidebar(false));
-
-    ui.dom.deleteAllChatsButton.addEventListener('click', () => {
-        ui.showConfirmModal('آیا از حذف تمام چت‌ها مطمئن هستید؟ این عمل غیرقابل بازگشت است.', () => {
-            state.setChatSessions([]);
-            state.setActiveChatId(null);
-            state.saveSessions();
-            handleNewChat();
-            ui.toggleSidebar(false);
-        });
-    });
-
-    ui.dom.modelSelectButton.addEventListener('click', () => ui.toggleModal(true));
-    ui.dom.modelSelectModal.addEventListener('click', (e) => {
-        if (e.target === ui.dom.modelSelectModal) ui.toggleModal(false);
-    });
+    // Event Listeners Setup
+    console.log('Setting up event listeners...');
     
-    ui.dom.modelOptionCards.forEach(card => {
-        card.addEventListener('click', () => {
+    // New Chat Button
+    const newChatBtn = document.getElementById('new-chat-btn');
+    if (newChatBtn) {
+        newChatBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleNewChat();
+        });
+        console.log('New chat button listener added');
+    }
+
+    // Menu Button (Mobile)
+    const menuButton = document.getElementById('menu-button');
+    if (menuButton) {
+        menuButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            ui.toggleSidebar(true);
+        });
+    }
+
+    // Sidebar Overlay
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', () => ui.toggleSidebar(false));
+    }
+
+    // Theme Toggle Button in Header
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleTheme();
+        });
+    }
+
+    // Model Selection
+    const modelSelectButton = document.getElementById('model-select-button');
+    const modelSelectModal = document.getElementById('model-select-modal');
+    
+    if (modelSelectButton && modelSelectModal) {
+        modelSelectButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            modelSelectModal.classList.add('visible');
+        });
+        
+        modelSelectModal.addEventListener('click', (e) => {
+            if (e.target === modelSelectModal) {
+                modelSelectModal.classList.remove('visible');
+            }
+        });
+    }
+    
+    // Model Option Cards
+    const modelOptions = document.querySelectorAll('.model-option');
+    modelOptions.forEach(option => {
+        option.addEventListener('click', (e) => {
+            e.preventDefault();
             const activeChat = state.getActiveChat();
             if (!activeChat) return;
-            activeChat.model = card.dataset.model;
-            ui.dom.currentModelName.textContent = card.dataset.name;
-            ui.updateRadioButtons();
+            
+            activeChat.model = option.dataset.model;
+            
+            // Update UI
+            modelOptions.forEach(opt => {
+                const dot = opt.querySelector('.inner-dot');
+                if (dot) dot.classList.add('hidden');
+            });
+            
+            const selectedDot = option.querySelector('.inner-dot');
+            if (selectedDot) selectedDot.classList.remove('hidden');
+            
             state.saveSessions();
-            ui.toggleModal(false);
+            
+            // Close modal
+            if (modelSelectModal) {
+                modelSelectModal.classList.remove('visible');
+            }
         });
     });
 
-    ui.dom.settingsButton.addEventListener('click', () => ui.toggleSettingsModal(true));
-    ui.dom.settingsModal.addEventListener('click', (e) => {
-        if (e.target === ui.dom.settingsModal) ui.toggleSettingsModal(false);
-    });
+    // Settings
+    const settingsButton = document.getElementById('settings-button');
+    const settingsModal = document.getElementById('settings-modal');
+    
+    if (settingsButton && settingsModal) {
+        settingsButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            settingsModal.classList.add('visible');
+        });
+        
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.remove('visible');
+            }
+        });
+    }
 
-    ui.dom.themeToggle.addEventListener('change', (e) => {
-        const newTheme = e.target.checked ? 'dark' : 'light';
-        localStorage.setItem('theme', newTheme);
-        ui.applyTheme(newTheme);
-    });
+    // Theme Toggle in Settings
+    if (themeToggle) {
+        themeToggle.addEventListener('change', toggleTheme);
+    }
 
-    ui.dom.attachFileButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isVisible = !ui.dom.filePopupMenu.classList.contains('hidden');
-        ui.toggleFilePopupMenu(!isVisible);
-    });
+    // File Attachment
+    const attachFileButton = document.getElementById('attach-file-button');
+    const filePopupMenu = document.getElementById('file-popup-menu');
+    
+    if (attachFileButton && filePopupMenu) {
+        attachFileButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const isVisible = !filePopupMenu.classList.contains('hidden');
+            ui.toggleFilePopupMenu(!isVisible);
+        });
+    }
 
+    // Close file popup when clicking outside
     window.addEventListener('click', (e) => {
-        if (!ui.dom.filePopupMenu.classList.contains('hidden') && !ui.dom.filePopupMenu.contains(e.target) && e.target !== ui.dom.attachFileButton && !ui.dom.attachFileButton.contains(e.target)) {
+        if (filePopupMenu && !filePopupMenu.classList.contains('hidden') && 
+            !filePopupMenu.contains(e.target) && 
+            e.target !== attachFileButton && 
+            attachFileButton && !attachFileButton.contains(e.target)) {
             ui.toggleFilePopupMenu(false);
         }
     });
     
-    ui.dom.selectImageOption.addEventListener('click', () => { ui.dom.imageFileInput.click(); });
-    ui.dom.selectFileOption.addEventListener('click', () => { ui.dom.generalFileInput.click(); });
-
-    ui.dom.imageFileInput.addEventListener('change', handleFileSelection);
-    ui.dom.generalFileInput.addEventListener('change', handleFileSelection);
-
-    ui.dom.removeImageButton.addEventListener('click', () => {
-        if (state.currentUploadXHR) {
-            state.currentUploadXHR.abort();
-            console.log("آپلود توسط کاربر لغو شد.");
-        }
-        
-        state.setAttachedFile(null);
-        ui.hideFilePreview();
-        ui.dom.submitButton.disabled = false;
-    });
-
-    ui.dom.htmlPreviewCloseBtn.addEventListener('click', () => ui.toggleHtmlPreviewModal(false));
-    ui.dom.htmlPreviewOverlay.addEventListener('click', () => ui.toggleHtmlPreviewModal(false));
+    // File selection options
+    const selectImageOption = document.getElementById('select-image-option');
+    const selectFileOption = document.getElementById('select-file-option');
+    const imageFileInput = document.getElementById('image-file-input');
+    const generalFileInput = document.getElementById('general-file-input');
     
-    ui.dom.galleryDownloadBtn.addEventListener('click', function() {
-        const url = ui.getCurrentGalleryImageUrl();
-        if (url) {
-            api.uploadToAISADAAndOpenAlpha(url, this);
-        }
-    });
+    if (selectImageOption && imageFileInput) {
+        selectImageOption.addEventListener('click', (e) => {
+            e.preventDefault();
+            imageFileInput.click();
+        });
+    }
+    
+    if (selectFileOption && generalFileInput) {
+        selectFileOption.addEventListener('click', (e) => {
+            e.preventDefault();
+            generalFileInput.click();
+        });
+    }
 
-    ui.dom.messageForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (state.isGenerating) {
-            if (state.globalAbortController) state.globalAbortController.abort();
-            if (state.currentImageEventSource) state.currentImageEventSource.close();
-            return;
-        }
+    if (imageFileInput) {
+        imageFileInput.addEventListener('change', handleFileSelection);
+    }
+    
+    if (generalFileInput) {
+        generalFileInput.addEventListener('change', handleFileSelection);
+    }
 
-        const activeChat = state.getActiveChat();
-        if (!activeChat) return;
-        const userMessageText = ui.dom.messageInput.value.trim();
-        if (!userMessageText && !state.attachedFile) return;
-
-        ui.setGeneratingState(true);
-
-        const isFirstMessageOfChat = activeChat.messages.length === 0;
-        if (isFirstMessageOfChat) {
-            const welcomeScreen = ui.dom.chatWindow.querySelector('.welcome-screen');
-            if (welcomeScreen) welcomeScreen.remove();
-        }
-
-        const previousLastUserIndex = state.findLastIndex(activeChat.messages, msg => msg.role === 'user');
-        if (previousLastUserIndex !== -1) {
-            const previousUserElement = ui.dom.chatWindow.querySelector(`.message-entry[data-index="${previousLastUserIndex}"]`);
-            if (previousUserElement) {
-                ui.updateMessageActions(previousUserElement, activeChat.messages[previousLastUserIndex], false, false);
+    // Remove file button
+    const removeImageButton = document.getElementById('remove-image-button');
+    if (removeImageButton) {
+        removeImageButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (state.currentUploadXHR) {
+                state.currentUploadXHR.abort();
+                console.log("آپلود توسط کاربر لغو شد.");
             }
-        }
-        
-        const previousLastModelIndex = state.findLastIndex(activeChat.messages, msg => msg.role === 'model');
-        if (previousLastModelIndex !== -1) {
-            const isItTheLastMessageOverall = previousLastModelIndex === activeChat.messages.length - 1;
-            if (isItTheLastMessageOverall) {
-                const previousModelElement = ui.dom.chatWindow.querySelector(`.message-entry[data-index="${previousLastModelIndex}"]`);
-                if (previousModelElement) {
-                    ui.updateMessageActions(previousModelElement, activeChat.messages[previousLastModelIndex], false, false);
-                }
-            }
-        }
-        
-        const userParts = [];
-        if (state.attachedFile) {
-            userParts.push({ 
-                fileUrl: state.attachedFile.url,
-                mimeType: state.attachedFile.mimeType,
-                name: state.attachedFile.name,
-                base64Data: state.attachedFile.base64Data
-            });
+            
+            state.setAttachedFile(null);
             ui.hideFilePreview();
-        }
-        if (userMessageText) {
-            userParts.push({ text: userMessageText });
-        }
-        
-        const newUserMessage = { role: 'user', parts: userParts };
-        activeChat.messages.push(newUserMessage);
-        ui.addMessageToUI(newUserMessage, activeChat.messages.length - 1, {isLastUser: true, animate: true});
-        
-        const modelPlaceholderMessage = { role: 'model', isTemporary: true, parts: [] };
-        activeChat.messages.push(modelPlaceholderMessage);
-        const modelBubbleOuterDiv = ui.addMessageToUI(modelPlaceholderMessage, activeChat.messages.length - 1, {animate: true});
-        
-        if (isFirstMessageOfChat && userMessageText) {
-            activeChat.title = userMessageText.substring(0, 30) + (userMessageText.length > 30 ? '...' : '');
-            ui.renderHistoryList();
-        }
-        
-        ui.dom.messageInput.value = '';
-        ui.dom.messageInput.dispatchEvent(new Event('input'));
-        
-        try {
-            await api.streamResponse(modelBubbleOuterDiv, activeChat.messages, activeChat.id);
-        } finally {
-            if (state.attachedFile) {
-                state.setAttachedFile(null);
-            }
-        }
-    });
+            
+            const submitButton = document.getElementById('submit-button');
+            if (submitButton) submitButton.disabled = false;
+        });
+    }
 
-    ui.dom.chatWindow.addEventListener('click', async (e) => {
-        const galleryItem = e.target.closest('.js-image-gallery-grid [data-index]');
-        if (galleryItem) {
-            const grid = galleryItem.closest('.js-image-gallery-grid');
-            const urls = grid.dataset.urls;
-            const index = galleryItem.dataset.index;
-            if (urls && index !== undefined) {
-                ui.openImageGallery(urls, parseInt(index, 10));
+    // Message Form Submit - This is the critical part!
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    
+    if (messageForm && messageInput) {
+        console.log('Setting up form submission handler');
+        
+        messageForm.addEventListener('submit', async (e) => {
+            console.log('Form submit event triggered');
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (state.isGenerating) {
+                if (state.globalAbortController) state.globalAbortController.abort();
+                if (state.currentImageEventSource) state.currentImageEventSource.close();
                 return;
             }
-        }
 
-        const clarificationButton = e.target.closest('.clarification-button');
-        if (clarificationButton) {
-            const payloadString = clarificationButton.dataset.actionPayload;
-            if (!payloadString || state.isGenerating) return;
-
-            const actionPayload = JSON.parse(payloadString);
             const activeChat = state.getActiveChat();
-            if (!activeChat) return;
+            if (!activeChat) {
+                console.log('No active chat found');
+                return;
+            }
             
-            ui.setGeneratingState(true);
-
-            const clarificationMessageElement = clarificationButton.closest('.message-entry');
-            const clarificationMessageIndex = parseInt(clarificationMessageElement.dataset.index, 10);
-            if (isNaN(clarificationMessageIndex)) {
-                ui.resetState();
+            const userMessageText = messageInput.value.trim();
+            if (!userMessageText && !state.attachedFile) {
+                console.log('No message text or attached file');
                 return;
             }
 
-            const modelPlaceholderMessage = { role: 'model', isTemporary: true, parts: [] };
-            activeChat.messages[clarificationMessageIndex] = modelPlaceholderMessage;
-            const newModelBubble = ui.addMessageToUI(modelPlaceholderMessage, clarificationMessageIndex, {}, clarificationMessageElement);
-            
-            const historyBeforeAction = activeChat.messages.slice(0, clarificationMessageIndex);
-            
-            if (actionPayload.intent === 'edit_image') {
-                let fileUrlForEditing = null;
-                for (let i = historyBeforeAction.length - 1; i >= 0; i--) {
-                    const msg = historyBeforeAction[i];
-                    if (msg.parts) {
-                        const imagePart = msg.parts.find(p => p.image_url || (p.edited_images && p.edited_images.length > 0));
-                        if(imagePart) {
-                            fileUrlForEditing = imagePart.image_url || imagePart.edited_images[0];
-                            break;
-                        }
-                        const filePart = msg.parts.find(p => p.fileUrl);
-                        if(filePart) {
-                            fileUrlForEditing = filePart.fileUrl;
-                            break;
-                        }
-                    }
-                }
-                
-                if (fileUrlForEditing) {
-                    await api.runExternalImageEditor(actionPayload.prompt, fileUrlForEditing, newModelBubble, clarificationMessageIndex);
-                } else {
-                    ui.displayError(newModelBubble, "متاسفانه تصویری برای ویرایش پیدا نشد.");
-                    ui.resetState();
-                }
-
-            } else if (actionPayload.intent === 'regenerate_with_enhancement') {
-                await api.streamResponse(newModelBubble, historyBeforeAction, activeChat.id, actionPayload);
-            }
-            return;
-        }
-
-        const button = e.target.closest('.action-button');
-        if (!button) return;
-    
-        const action = button.dataset.action;
-        const messageEntry = button.closest('.message-entry');
-        if (!messageEntry) return;
-
-        const messageIndex = parseInt(messageEntry.dataset.index, 10);
-        const activeChat = state.getActiveChat();
-        if (!activeChat || isNaN(messageIndex)) return;
-    
-        const message = activeChat.messages[messageIndex];
-    
-        if (action === 'download-image') {
-            const imageUrl = message.parts.find(p => p.image_url)?.image_url;
-            if (imageUrl) {
-                 api.uploadToAISADAAndOpenAlpha(imageUrl, button);
-            }
-        } 
-        else if (action === 'copy') {
-            const textToCopy = message.parts?.find(p => p.text)?.text || '';
-            if (textToCopy) {
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    ui.showCopyFeedback(button);
-                });
-            }
-        } else if (action === 'like' || action === 'dislike') {
-            ui.handleLikeDislike(button, messageEntry);
-        } 
-        else if (action === 'regenerate') {
-            if (state.isGenerating) return;
+            console.log('Processing message:', userMessageText);
             
             ui.setGeneratingState(true);
-            state.setGpuGuideState(false);
-            
-            const lastModelMessageIndex = state.findLastIndex(activeChat.messages, msg => msg.role === 'model');
-            
-            if (messageIndex === lastModelMessageIndex) {
-                activeChat.messages.length = messageIndex;
-                messageEntry.remove();
-                
-                const lastUserMessageIndex = state.findLastIndex(activeChat.messages, msg => msg.role === 'user');
-                if (lastUserMessageIndex !== -1) {
-                    const lastUserMessageElement = ui.dom.chatWindow.querySelector(`.message-entry[data-index="${lastUserMessageIndex}"]`);
-                    if (lastUserMessageElement) {
-                        ui.updateMessageActions(lastUserMessageElement, activeChat.messages[lastUserMessageIndex], true, false);
-                    }
-                }
 
-                const modelPlaceholderMessage = { role: 'model', isTemporary: true, parts: [] };
-                activeChat.messages.push(modelPlaceholderMessage);
-                
-                const newModelBubble = ui.addMessageToUI(modelPlaceholderMessage, activeChat.messages.length - 1, { animate: true });
-                
-                await api.streamResponse(newModelBubble, activeChat.messages, activeChat.id);
-            } else {
+            const isFirstMessageOfChat = activeChat.messages.length === 0;
+            if (isFirstMessageOfChat) {
+                ui.hideWelcomeScreen();
+            }
+
+            const userParts = [];
+            if (state.attachedFile) {
+                userParts.push({ 
+                    fileUrl: state.attachedFile.url,
+                    mimeType: state.attachedFile.mimeType,
+                    name: state.attachedFile.name,
+                    base64Data: state.attachedFile.base64Data
+                });
+                ui.hideFilePreview();
+            }
+            if (userMessageText) {
+                userParts.push({ text: userMessageText });
+            }
+            
+            const newUserMessage = { role: 'user', parts: userParts };
+            activeChat.messages.push(newUserMessage);
+            ui.addMessageToUI(newUserMessage, activeChat.messages.length - 1, {isLastUser: true, animate: true});
+            
+            const modelPlaceholderMessage = { role: 'model', isTemporary: true, parts: [] };
+            activeChat.messages.push(modelPlaceholderMessage);
+            const modelBubbleOuterDiv = ui.addMessageToUI(modelPlaceholderMessage, activeChat.messages.length - 1, {animate: true});
+            
+            if (isFirstMessageOfChat && userMessageText) {
+                activeChat.title = userMessageText.substring(0, 30) + (userMessageText.length > 30 ? '...' : '');
+                ui.renderHistoryList();
+            }
+            
+            messageInput.value = '';
+            messageInput.dispatchEvent(new Event('input'));
+            
+            try {
+                await api.streamResponse(modelBubbleOuterDiv, activeChat.messages, activeChat.id);
+            } catch (error) {
+                console.error('Error in streamResponse:', error);
                 ui.resetState();
-            }
-        } 
-        else if (action === 'edit') {
-            if (state.isGenerating) return;
-            
-            const lastUserMessageIndex = state.findLastIndex(activeChat.messages, msg => msg.role === 'user');
-            if (messageIndex === lastUserMessageIndex) {
-                const textPart = message.parts.find(p => p.text);
-                const filePart = message.parts.find(p => p.fileUrl);
-
-                if (textPart || filePart) {
-                    ui.showEditModal(textPart ? textPart.text : '', async (newText) => {
-                        ui.setGeneratingState(true);
-                        
-                        const allMessagesInDOM = ui.dom.chatWindow.querySelectorAll('.message-entry');
-                        allMessagesInDOM.forEach(msgEl => {
-                            const idx = parseInt(msgEl.dataset.index, 10);
-                            if (idx >= messageIndex) {
-                                msgEl.remove();
-                            }
-                        });
-
-                        activeChat.messages.length = messageIndex;
-
-                        const newParts = [];
-                        if (filePart) {
-                             newParts.push(filePart);
-                        }
-                        if (newText.trim()) newParts.push({ text: newText });
-
-                        if (newParts.length > 0) {
-                            const editedUserMessage = { role: 'user', parts: newParts };
-                            activeChat.messages.push(editedUserMessage);
-                            ui.addMessageToUI(editedUserMessage, activeChat.messages.length - 1, { isLastUser: true, animate: true });
-                        }
-
-                        const modelPlaceholderMessage = { role: 'model', isTemporary: true, parts: [] };
-                        activeChat.messages.push(modelPlaceholderMessage);
-                        state.saveSessions(); 
-
-                        const newModelBubble = ui.addMessageToUI(modelPlaceholderMessage, activeChat.messages.length - 1, { animate: true });
-                        
-                        await api.streamResponse(newModelBubble, activeChat.messages, activeChat.id);
-                    });
+            } finally {
+                if (state.attachedFile) {
+                    state.setAttachedFile(null);
                 }
             }
-        }
-        else if (action === 'show-message-menu') {
-            ui.showMessageMenu(e, messageIndex);
-        }
-    });
+        });
+        
+        console.log('Form submission handler set up successfully');
+    } else {
+        console.error('Message form or input not found!');
+    }
 
-    ui.dom.historyItemMenu.addEventListener('click', (e) => {
-        const button = e.target.closest('.menu-item');
-        if (!button) return;
+    // Auto-resize textarea
+    if (messageInput) {
+        messageInput.addEventListener('input', () => {
+            ui.adjustTextareaHeight(messageInput, messageForm);
+        });
+    }
 
-        const action = button.dataset.action;
-        const format = button.dataset.format;
-        const sessionId = ui.dom.historyItemMenu.dataset.sessionId;
-        const session = state.chatSessions.find(s => s.id === sessionId);
-        if (!session) return;
-
-        if (action === 'rename') {
-            ui.showRenameModal(session.title, (newTitle) => {
-                session.title = newTitle;
-                state.saveSessions();
-                ui.renderHistoryList();
-            });
-        } else if (action === 'delete') {
-            ui.showConfirmModal(`آیا از حذف گفتگوی "${session.title}" مطمئن هستید؟`, () => {
-                state.setChatSessions(state.chatSessions.filter(s => s.id !== sessionId));
-                state.saveSessions();
-                if (state.activeChatId === sessionId) {
-                    if (state.chatSessions.length > 0) {
-                        state.setActiveChatId(state.chatSessions[0].id);
-                        ui.renderActiveChat();
-                    } else {
-                        handleNewChat();
-                    }
-                }
-                ui.renderHistoryList();
-            });
-        } else if (action === 'convert-chat') {
-            const fullText = getFullChatText(session);
-            api.convertTextToFile(fullText, format, button);
-        }
-        ui.dom.historyItemMenu.classList.remove('visible');
-    });
-
-    ui.dom.messageItemMenu.addEventListener('click', (e) => {
-        const menu = ui.dom.messageItemMenu;
-        const closeMenu = () => {
-            menu.classList.remove('visible');
-            setTimeout(() => {
-                menu.classList.add('hidden');
-            }, 300);
-        };
-
-        if (e.target === ui.dom.messageItemMenuOverlay) {
-            closeMenu();
-            return;
-        }
-
-        const button = e.target.closest('.menu-item');
-        if (!button) return;
-
-        const action = button.dataset.action;
-        const format = button.dataset.format;
-        const messageIndex = parseInt(menu.dataset.messageIndex, 10);
-        const activeChat = state.getActiveChat();
-        if (!activeChat || isNaN(messageIndex)) {
-            closeMenu();
-            return;
-        }
-        const message = activeChat.messages[messageIndex];
-
-        if (action === 'delete-message') {
-            ui.showConfirmModal('آیا از حذف این پیام مطمئن هستید؟', () => {
-                state.deleteMessage(activeChat.id, messageIndex);
-                ui.renderActiveChat();
-            });
-        } else if (action === 'convert-message') {
-            const textContent = message.parts?.find(p => p.text)?.text || '';
-            if (textContent) {
-                api.convertTextToFile(textContent, format, button);
-            } else {
-                alert('محتوای متنی برای تبدیل وجود ندارد.');
-            }
-        }
-        closeMenu();
-    });
+    // Confirm modal handlers
+    const confirmModal = document.getElementById('confirm-modal');
+    const confirmModalCancelBtn = document.getElementById('confirm-modal-cancel-btn');
     
-    ui.dom.messageInput.addEventListener('input', () => {
-        ui.adjustTextareaHeight(ui.dom.messageInput, ui.dom.messageForm);
-    });
+    if (confirmModal && confirmModalCancelBtn) {
+        confirmModalCancelBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            confirmModal.classList.remove('visible');
+        });
+        
+        confirmModal.addEventListener('click', (e) => {
+            if (e.target === confirmModal) {
+                confirmModal.classList.remove('visible');
+            }
+        });
+    }
 
-    ui.dom.editInput.addEventListener('input', () => {
-        ui.adjustTextareaHeight(ui.dom.editInput);
-    });
+    console.log('All event listeners set up successfully');
 });
 
+// Global functions
 window.handleSuggestionClick = ui.handleSuggestionClick;
 window.uploadToAISADAAndOpenAlpha = api.uploadToAISADAAndOpenAlpha;

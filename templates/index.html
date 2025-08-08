@@ -256,6 +256,54 @@
         </div>
     </div>
 
+    <script>
+        // Critical fix for form submission
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('=== CHATBOT INITIALIZATION ===');
+            
+            // Wait a bit for all elements to be ready
+            setTimeout(() => {
+                const form = document.getElementById('message-form');
+                const input = document.getElementById('message-input');
+                const submitBtn = document.getElementById('submit-button');
+                
+                console.log('Form elements check:');
+                console.log('- message-form:', form ? 'FOUND' : 'NOT FOUND');
+                console.log('- message-input:', input ? 'FOUND' : 'NOT FOUND');
+                console.log('- submit-button:', submitBtn ? 'FOUND' : 'NOT FOUND');
+                
+                if (form && input) {
+                    // Remove any existing listeners
+                    const newForm = form.cloneNode(true);
+                    form.parentNode.replaceChild(newForm, form);
+                    
+                    // Add clean event listener
+                    newForm.addEventListener('submit', (e) => {
+                        console.log('✅ Form submission intercepted!');
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const message = newForm.querySelector('#message-input').value.trim();
+                        if (message) {
+                            console.log('📤 Sending message:', message);
+                            
+                            // Clear input
+                            newForm.querySelector('#message-input').value = '';
+                            
+                            // For now, just show an alert - replace with actual API call
+                            alert('پیام ارسال شد: ' + message);
+                            
+                            // TODO: Replace this with actual API call to /chat
+                        }
+                    });
+                    
+                    console.log('✅ Form handler attached successfully');
+                } else {
+                    console.error('❌ Required form elements not found');
+                }
+            }, 100);
+        });
+    </script>
     <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
     
 </body>
