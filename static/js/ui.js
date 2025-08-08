@@ -364,7 +364,7 @@ export function addMessageToUI(message, index, options = {}, existingElement = n
 
     if (!finalElement) {
         finalElement = document.createElement('div');
-        finalElement.className = `message-entry mb-6 flex items-end gap-3 ${isUser ? 'justify-end' : 'justify-start'}`;
+        finalElement.className = `message-entry mb-6 flex items-start gap-3 ${isUser ? 'justify-end' : 'justify-start'}`;
         finalElement.dataset.index = index;
         if (animate) finalElement.classList.add('message-entry');
 
@@ -377,8 +377,8 @@ export function addMessageToUI(message, index, options = {}, existingElement = n
         
         finalElement.innerHTML = `
             ${!isUser ? modelIcon : ''}
-            <div class="relative group w-11/12 md:max-w-2xl">
-                <div id="${messageId}" class="p-4 rounded-xl ${messageBubbleClasses}">
+            <div class="relative group w-[92%] md:w-[88%] lg:w-[85%]">
+                <div id="${messageId}" class="p-4 rounded-xl ${messageBubbleClasses} border">
                     <div class="message-content-area"></div>
                 </div>
             </div>
