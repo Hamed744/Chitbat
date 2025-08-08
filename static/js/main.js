@@ -156,14 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Enter to send, Shift+Enter for newline
-    ui.dom.messageInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            ui.dom.messageForm.requestSubmit();
-        }
-    });
-
     ui.dom.messageForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (state.isGenerating) {

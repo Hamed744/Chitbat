@@ -72,7 +72,7 @@ export const dom = {
     themeToggle: document.getElementById('theme-toggle'),
 };
 
-const MAX_TEXTAREA_HEIGHT = 160;
+const MAX_TEXTAREA_HEIGHT = 120;
 const MAX_RADIUS = 28;
 const MIN_RADIUS = 20;
 export let minTextareaHeight = 0;
@@ -369,16 +369,16 @@ export function addMessageToUI(message, index, options = {}, existingElement = n
         if (animate) finalElement.classList.add('message-entry');
 
         const messageBubbleClasses = isUser 
-            ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100' 
-            : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200';
+            ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-br-none' 
+            : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 rounded-bl-none';
             
-        const userIcon = `<div class=\"w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-600 text-white\"><svg class=\"w-6 h-6\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\"></path></svg></div>`
-        const modelIcon = `<div class=\"w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-emerald-600 text-white\"><svg class=\"w-6 h-6\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z\"></path></svg></div>`}
+        const userIcon = `<div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-600 text-white"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg></div>`;
+        const modelIcon = `<div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-slate-700 dark:bg-slate-600 text-white"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"></path></svg></div>`;
         
         finalElement.innerHTML = `
             ${!isUser ? modelIcon : ''}
-            <div class="relative group w-11/12 md:max-w-2xl">
-                <div id="${messageId}" class="p-4 rounded-xl ${messageBubbleClasses}">
+            <div class="relative group w-11/12 md:max-w-xl">
+                <div id="${messageId}" class="p-4 rounded-2xl shadow-sm ${messageBubbleClasses}">
                     <div class="message-content-area"></div>
                 </div>
             </div>
@@ -716,7 +716,7 @@ export function toggleSidebar(show) {
         });
     } else {
         dom.sidebarOverlay.style.opacity = '0';
-        dom.historySidebar.style.transform = 'translateX(-100%)';
+        dom.historySidebar.style.transform = 'translateX(100%)';
         setTimeout(() => dom.sidebarOverlay.classList.add('hidden'), 300);
     }
 }
@@ -823,16 +823,16 @@ export function showHistoryMenu(event, sessionId) {
     const margin = 8;
     
     let top = buttonRect.bottom + margin;
-    let left = buttonRect.left;
+    let right = window.innerWidth - buttonRect.right;
     
     if (top + menuHeight > window.innerHeight) {
         top = buttonRect.top - menuHeight - margin;
     }
     
     menu.style.top = `${top}px`;
-    menu.style.left = `${left}px`;
-    menu.style.right = 'auto';
-    menu.style.transformOrigin = (top > buttonRect.top) ? 'bottom left' : 'top left';
+    menu.style.right = `${right}px`;
+    menu.style.left = 'auto';
+    menu.style.transformOrigin = (top > buttonRect.top) ? 'bottom right' : 'top right';
 
     menu.classList.add('visible');
     const closeMenu = () => {
